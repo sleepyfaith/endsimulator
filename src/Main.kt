@@ -6,6 +6,7 @@ import lgbt.faith.block.CPos
 import lgbt.faith.block.RPos
 import lgbt.faith.structures.EndCity
 import lgbt.faith.structures.EndCityGenerator
+import lgbt.faith.structures.EndGateway
 import lgbt.faith.terrain.TerrainGenerator
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
@@ -41,11 +42,16 @@ fun renderEndMap(
                 endCity.getInRegion(region.x, region.z, seed)
             }
 
-            val canSpawn = endCity.canSpawn(chunk.x, chunk.z, terrainGenerator.biomeSource)
-            val canGen = endCityGenerator.generate(terrainGenerator, chunk)
+            var canSpawn = false
+            var canGen = false
+
+            if (chunk == BPos(wx, 0, wz).toChunkPos()) {
+                canSpawn = endCity.canSpawn(chunk.x, chunk.z, terrainGenerator.biomeSource)
+                canGen = endCityGenerator.generate(terrainGenerator, chunk)
+            }
 
 
-            if (!canSpawn || !canGen || chunk != BPos(wx, 0, wz).toChunkPos()) {
+            if (!canSpawn || !canGen) {
                 val h = terrainGenerator.getHeight(wx, wz)
 
                 val t = (h.toFloat() / 128f).coerceIn(0f, 1f)
@@ -68,6 +74,8 @@ fun renderEndMap(
 fun main() {
     val seed: Long = 1
 
+    val gateway = EndGateway()
+
     val endCity = EndCity()
     val endCityGenerator = EndCityGenerator()
 
@@ -89,6 +97,10 @@ fun main() {
     println("canSpawn: $canSpawn")
     println("canGen: $canGen")
     if (canGen) println("hasShip: $hasShip")
+
+    // print the generation order of end gateways on the main end island
+    println(gateway.getEndIslandGatewayOrder(source).contentToString())
+
 
     // generate image of end islands around the city
     println("creating end island image....")
