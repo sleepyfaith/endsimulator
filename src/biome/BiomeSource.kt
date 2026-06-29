@@ -16,7 +16,7 @@ class BiomeSource(val worldSeed: Long) {
     }
 
     fun sampleSimplex(x: Int, z: Int): Boolean {
-        return simplex.sample(x, z) < (-0.9f).toDouble()
+        return simplex.sample2D(x.toDouble(), z.toDouble()) < (-0.9f).toDouble()
     }
 
     // height

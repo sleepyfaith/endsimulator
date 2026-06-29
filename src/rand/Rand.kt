@@ -6,6 +6,11 @@ class Rand(var seed: Long = 0) {
     private val addend = 0xBL
     private val mask = (1L shl 48) - 1
 
+    fun setSeed(newSeed: Long): Long {
+        seed = (newSeed xor multiplier) and mask
+        return seed
+    }
+
     fun advance(n: Int) {
         repeat(n) {
             nextInt()
@@ -17,25 +22,18 @@ class Rand(var seed: Long = 0) {
         return (seed ushr (48-bits)).toInt()
     }
 
-    fun nextFloat(): Float {
-        return next(24) / (1 shl 24).toFloat()
-    }
+    fun nextFloat(): Float = next(24) / (1 shl 24).toFloat()
 
-    fun nextDouble(): Double {
-        return (((next(26).toLong() shl 27) + next(27).toLong()) * 1.1102230246251565E-16)
-    }
+    fun nextDouble(): Double = (((next(26).toLong() shl 27) + next(27).toLong()) * 1.1102230246251565E-16)
 
-    fun nextInt(): Int {
-        return next(32)
-    }
+    fun nextInt(): Int = next(32)
+
     fun nextLong(): Long {
-        return (next(32).toLong() shl 32) + next(32).toLong()
+        val high = next(32).toLong() shl 32
+        val low = next(32).toLong() and 0xffffffffL
+        return high or low
     }
-
-    fun setSeed(newSeed: Long): Long {
-        seed = (newSeed xor multiplier) and mask
-        return seed
-    }
+    fun nextBoolean(): Boolean = next(1) != 0
 
     fun nextInt(bound: Int): Int {
         require(bound > 0)

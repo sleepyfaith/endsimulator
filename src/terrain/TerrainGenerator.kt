@@ -7,6 +7,8 @@ import lgbt.faith.rand.Rand
 
 class TerrainGenerator(val biomeSource: BiomeSource) {
 
+    val worldSeed = biomeSource.worldSeed
+
     val defaultBlock = "endstone"
     val defaultFluid = "air"
     val worldHeight = 256
@@ -21,7 +23,7 @@ class TerrainGenerator(val biomeSource: BiomeSource) {
     private var mainPerlinNoise: OctavePerlinNoise
 
     init {
-        val rand = Rand(0).apply { setSeed(biomeSource.worldSeed) }
+        val rand = Rand(0).apply { setSeed(worldSeed) }
 
         minLimitPerlinNoise = OctavePerlinNoise(rand, 16)
         maxLimitPerlinNoise = OctavePerlinNoise(rand, 16)

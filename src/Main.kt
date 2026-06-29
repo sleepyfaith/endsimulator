@@ -1,6 +1,10 @@
 package lgbt.faith
 
 import lgbt.faith.biome.BiomeSource
+import lgbt.faith.block.BPos
+import lgbt.faith.block.RPos
+import lgbt.faith.structures.EndCity
+import lgbt.faith.structures.EndCityGenerator
 import lgbt.faith.terrain.TerrainGenerator
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
@@ -43,10 +47,32 @@ fun renderEndMap(
 }
 
 fun main() {
+    val seed: Long = 1
 
-    val source = BiomeSource(1)
+    val endCity = EndCity()
+    val endCityGenerator = EndCityGenerator()
+
+    val source = BiomeSource(seed)
     val terrain = TerrainGenerator(source)
 
+    val region = BPos(2648, 0, -1848).toChunkPos().toRegionPos(endCity.spacing)
+
+    // show information about an end city on seed 1
+    val chunk = endCity.getInRegion(region.x, region.z, seed)
+    val block = chunk.toBlockPos()
+
+    val canSpawn = endCity.canSpawn(chunk.x, chunk.z, source)
+    val canGen = endCityGenerator.generate(terrain, chunk)
+    val hasShip = endCityGenerator.hasShip()
+
+    println("chunk: $chunk")
+    println("block: $block")
+    println("canSpawn: $canSpawn")
+    println("canGen: $canGen")
+    if (canGen) println("hasShip: $hasShip")
+
+    // generate image of end island
+    println("creating end island image....")
     val img = renderEndMap(512, 512, 0, 0, terrain)
 
     ImageIO.write(img, "png", File("end_map.png"))

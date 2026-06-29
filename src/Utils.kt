@@ -54,6 +54,15 @@ object Utils {
             else -> return 0.0 // never happens
         }
     }
+    private val grad3 = arrayOf(
+        1.0 to 1.0,  -1.0 to 1.0,  1.0 to -1.0, -1.0 to -1.0,
+        1.0 to 0.0,  -1.0 to 0.0,  1.0 to 0.0,  -1.0 to 0.0,
+        0.0 to 1.0,   0.0 to -1.0, 0.0 to 1.0,   0.0 to -1.0
+    )
+    fun grad2(hash: Int, x: Double, y: Double): Double {
+        val h = Math.floorMod(hash, 12)
+        return grad3[h].first * x + grad3[h].second * y
+    }
 
     fun smoothStep(d: Double): Double {
         return d * d * d * (d * (d * 6.0 - 15.0) + 10.0)

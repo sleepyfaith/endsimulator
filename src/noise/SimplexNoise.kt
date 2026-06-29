@@ -1,87 +1,131 @@
 package lgbt.faith.noise
 
 import lgbt.faith.Utils
+import lgbt.faith.Utils.grad2
 import lgbt.faith.rand.Rand
 import kotlin.math.floor
 import kotlin.math.sqrt
 
 class SimplexNoise(rand: Rand) {
+    val originX: Double = rand.nextDouble() * 256.0
+    val originY: Double = rand.nextDouble() * 256.0
+    val originZ: Double = rand.nextDouble() * 256.0
 
-    private val permutations = ByteArray(256)
+    private val perm = IntArray(256)
 
     init {
-
-        rand.advance(3) // origin xyz, unused in simplex
-
+        for (i in 0 until 256) perm[i] = i
         for (i in 0 until 256) {
-            permutations[i] = i.toByte()
-        }
-
-        for (i in 0 until 256) {
-            val j = i + rand.nextInt(256 - i)
-
-            val tmp = permutations[i]
-            permutations[i] = permutations[j]
-            permutations[j] = tmp
+            val j = rand.nextInt(256 - i) + i
+            val tmp = perm[i]
+            perm[i] = perm[j]
+            perm[j] = tmp
         }
     }
 
-    fun lookup(hash: Int): Int {
-        return permutations[hash and 0xFF].toInt() and 0xFF
+    fun lookup(i: Int): Int = perm[i and 255]
+
+    private val grad3 = arrayOf(
+        1.0 to 1.0,  -1.0 to 1.0,  1.0 to -1.0, -1.0 to -1.0,
+        1.0 to 0.0,  -1.0 to 0.0,  1.0 to 0.0,  -1.0 to 0.0,
+        0.0 to 1.0,   0.0 to -1.0, 0.0 to 1.0,   0.0 to -1.0
+    )
+
+    private fun grad2(hash: Int, x: Double, y: Double): Double {
+        val h = Math.floorMod(hash, 12)
+        return grad3[h].first * x + grad3[h].second * y
     }
 
-    val SQRT_3 = sqrt(3.0)
-    val SKEW_FACTOR_2D = 0.5 * (SQRT_3 - 1.0)
-    val UNSKEW_FACTOR_2D = (3.0 - SQRT_3) / 6.0
+    fun sample2D(x: Double, y: Double): Double {
+        val F2 = 0.3660254037844386
+        val G2 = 0.21132486540518713
 
-    // sample3d unused in end simulation
+        val s = (x + y) * F2
+        val i = kotlin.math.floor(x + s).toInt()
+        val j = kotlin.math.floor(y + s).toInt()
 
-    fun sample(x: Int, z: Int): Double {
-        val hairyFactor = (x + z) * SKEW_FACTOR_2D
+        val t = (i + j) * G2
+        val x0 = x - (i - t)
+        val y0 = y - (j - t)
 
-        val hairyX: Int = floor(x + hairyFactor).toInt()
-        val hairyZ: Int = floor(z + hairyFactor).toInt()
-        val mixedHairyXz = (hairyX + hairyZ).toDouble() * UNSKEW_FACTOR_2D
-        val diffXToXz = hairyX.toDouble() - mixedHairyXz
-        val diffZToXz = hairyZ.toDouble() - mixedHairyXz
-        val x0 = x - diffXToXz
-        val y0 = z - diffZToXz
-        val offsetSecondCornerX: Byte
-        val offsetSecondCornerZ: Byte
+        val (i1, j1) = if (x0 > y0) 1 to 0 else 0 to 1
 
-        if (x0 > y0) {
-            offsetSecondCornerX = 1
-            offsetSecondCornerZ = 0
-        } else {
-            offsetSecondCornerX = 0
-            offsetSecondCornerZ = 1
+        val x1 = x0 - i1 + G2
+        val y1 = y0 - j1 + G2
+        val x2 = x0 - 1.0 + 2.0 * G2
+        val y2 = y0 - 1.0 + 2.0 * G2
+
+        val ii = i and 255
+        val jj = j and 255
+
+        fun noise(ix: Int, iy: Int, dx: Double, dy: Double): Double {
+            val t = 0.5 - dx * dx - dy * dy
+            if (t < 0) return 0.0
+            val h = Math.floorMod(lookup(ix + lookup(iy)), 12)
+            val tt = t * t
+            return tt * tt * grad2(h, dx, dy)
         }
 
-        val x1 = x0 - offsetSecondCornerX.toDouble() + UNSKEW_FACTOR_2D
-        val y1 = y0 - offsetSecondCornerZ.toDouble() + UNSKEW_FACTOR_2D
-        val x3 = x0 - 1.0 + 2.0 * UNSKEW_FACTOR_2D
-        val y3 = y0 - 1.0 + 2.0 * UNSKEW_FACTOR_2D
-        val ii = hairyX and 255
-        val jj = hairyZ and 255
-        val gi0: Int = lookup(ii + lookup(jj)) % 12
-        val gi1: Int = lookup(ii + offsetSecondCornerX + lookup(jj + offsetSecondCornerZ)) % 12
-        val gi2: Int = lookup(ii + 1 + lookup(jj + 1)) % 12
-        val t0: Double = cornerNoise3d(gi0, x0, y0, 0.0, 0.5)
-        val t1: Double = cornerNoise3d(gi1, x1, y1, 0.0, 0.5)
-        val t2: Double = cornerNoise3d(gi2, x3, y3, 0.0, 0.5)
-        return 70.0 * (t0 + t1 + t2)
+        return 70.0 * (
+                noise(ii,     jj,     x0, y0) +
+                        noise(ii + i1, jj + j1, x1, y1) +
+                        noise(ii + 1,  jj + 1,  x2, y2)
+                )
     }
 
-    fun cornerNoise3d(hash: Int, x: Double, y: Double, z: Double, max: Double): Double {
-        var contr = max - x * x - y * y - z * z
-        var result: Double
-        if (contr < 0.0) {
-            result = 0.0
-        } else {
-            contr *= contr
-            result = contr * contr * Utils.grad(hash, x, y, z)
+    fun sample3D(x: Double, y: Double, z: Double): Double {
+        val F3 = 1.0 / 3.0
+        val G3 = 1.0 / 6.0
+
+        val s = (x + y + z) * F3
+        val i = kotlin.math.floor(x + s).toInt()
+        val j = kotlin.math.floor(y + s).toInt()
+        val k = kotlin.math.floor(z + s).toInt()
+
+        val t = (i + j + k) * G3
+        val x0 = x - (i - t)
+        val y0 = y - (j - t)
+        val z0 = z - (k - t)
+
+        val (i1, j1, k1, i2, j2, k2) = when {
+            x0 >= y0 && y0 >= z0 -> Sextuple(1,0,0, 1,1,0)
+            x0 >= y0             -> Sextuple(1,0,0, 1,0,1)
+            x0 >= z0             -> Sextuple(0,1,0, 1,1,0) // unreachable but kept for completeness
+            y0 >= z0             -> Sextuple(0,1,0, 1,1,0)
+            y0 >= x0             -> Sextuple(0,1,0, 0,1,1)
+            else                 -> Sextuple(0,0,1, 0,1,1)
         }
 
-        return result
+        val x1 = x0 - i1 + G3;  val y1 = y0 - j1 + G3;  val z1 = z0 - k1 + G3
+        val x2 = x0 - i2 + 2*G3; val y2 = y0 - j2 + 2*G3; val z2 = z0 - k2 + 2*G3
+        val x3 = x0 - 1.0 + 3*G3; val y3 = y0 - 1.0 + 3*G3; val z3 = z0 - 1.0 + 3*G3
+
+        val ii = i and 255
+        val jj = j and 255
+        val kk = k and 255
+
+        fun grad3f(hash: Int, x: Double, y: Double, z: Double): Double {
+            val h = hash and 15
+            val u = if (h < 8) x else y
+            val v = if (h < 4) y else if (h == 12 || h == 14) x else z
+            return (if (h and 1 == 0) u else -u) + (if (h and 2 == 0) v else -v)
+        }
+
+        fun noise(ix: Int, iy: Int, iz: Int, dx: Double, dy: Double, dz: Double): Double {
+            val t = 0.6 - dx*dx - dy*dy - dz*dz
+            if (t < 0) return 0.0
+            val h = lookup(ix + lookup(iy + lookup(iz)))
+            val tt = t * t
+            return tt * tt * grad3f(h, dx, dy, dz)
+        }
+
+        return 32.0 * (
+                noise(ii,      jj,      kk,      x0, y0, z0) +
+                        noise(ii+i1,   jj+j1,   kk+k1,   x1, y1, z1) +
+                        noise(ii+i2,   jj+j2,   kk+k2,   x2, y2, z2) +
+                        noise(ii+1,    jj+1,    kk+1,    x3, y3, z3)
+                )
     }
+
+    private data class Sextuple(val a:Int,val b:Int,val c:Int,val d:Int,val e:Int,val f:Int)
 }
