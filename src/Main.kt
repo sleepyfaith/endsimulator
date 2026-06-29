@@ -2,6 +2,7 @@ package lgbt.faith
 
 import lgbt.faith.biome.BiomeSource
 import lgbt.faith.block.BPos
+import lgbt.faith.block.CPos
 import lgbt.faith.block.RPos
 import lgbt.faith.structures.EndCity
 import lgbt.faith.structures.EndCityGenerator
@@ -22,6 +23,11 @@ fun renderEndMap(
     val startBlockX = centreX - width  / 2
     val startBlockZ = centreZ - height / 2
 
+    val endCity = EndCity()
+    val endCityGenerator = EndCityGenerator()
+    val seed = terrainGenerator.worldSeed
+
+    val regionCache = mutableMapOf<RPos, CPos>()
     for (z in 0 until width) {
         val wz = startBlockZ + z
         val row = z * width
@@ -30,16 +36,29 @@ fun renderEndMap(
 
             val wx = startBlockX + x
 
-            val h = terrainGenerator.getHeight(wx, wz)
+            val region = BPos(wx, 0, wz).toChunkPos().toRegionPos(endCity.spacing)
+            val chunk = regionCache.getOrPut(region) {
+                endCity.getInRegion(region.x, region.z, seed)
+            }
 
-            val t = (h.toFloat() / 128f).coerceIn(0f, 1f)
-            val brightness = (t * 255).toInt()
+            val canSpawn = endCity.canSpawn(chunk.x, chunk.z, terrainGenerator.biomeSource)
+            val canGen = endCityGenerator.generate(terrainGenerator, chunk)
 
-            val r = (brightness * 0.968f).toInt().coerceIn(0, 255)
-            val g = (brightness * 0.913f).toInt().coerceIn(0, 255)
-            val b = (brightness * 0.639f).toInt().coerceIn(0, 255)
 
-            data[row + x] = (r shl 16) or (g shl 8) or (b)
+            if (!canSpawn || !canGen || chunk != BPos(wx, 0, wz).toChunkPos()) {
+                val h = terrainGenerator.getHeight(wx, wz)
+
+                val t = (h.toFloat() / 128f).coerceIn(0f, 1f)
+                val brightness = (t * 255).toInt()
+
+                val r = (brightness * 0.968f).toInt().coerceIn(0, 255)
+                val g = (brightness * 0.913f).toInt().coerceIn(0, 255)
+                val b = (brightness * 0.639f).toInt().coerceIn(0, 255)
+
+                data[row + x] = (r shl 16) or (g shl 8) or (b)
+            } else {
+                data[row + x] = (178 shl 16) or (76 shl 8) or (216)
+            }
         }
     }
 
@@ -71,9 +90,9 @@ fun main() {
     println("canGen: $canGen")
     if (canGen) println("hasShip: $hasShip")
 
-    // generate image of end island
+    // generate image of end islands around the city
     println("creating end island image....")
-    val img = renderEndMap(512, 512, 0, 0, terrain)
+    val img = renderEndMap(512, 512, 2648, -1848, terrain)
 
     ImageIO.write(img, "png", File("end_map.png"))
     println("complete!")
