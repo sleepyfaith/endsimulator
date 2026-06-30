@@ -26,6 +26,7 @@ fun renderEndMap(
 
     val endCity = EndCity()
     val endCityGenerator = EndCityGenerator()
+    val gateway = EndGateway()
     val seed = terrainGenerator.worldSeed
 
     val regionCache = mutableMapOf<RPos, CPos>()
@@ -37,21 +38,30 @@ fun renderEndMap(
 
             val wx = startBlockX + x
 
-            val region = BPos(wx, 0, wz).toChunkPos().toRegionPos(endCity.spacing)
+            val pixel = BPos(wx, 0, wz)
+            val pixelChunk = pixel.toChunkPos()
+
+            val region = pixelChunk.toRegionPos(endCity.spacing)
             val chunk = regionCache.getOrPut(region) {
                 endCity.getInRegion(region.x, region.z, seed)
             }
 
-            var canSpawn = false
-            var canGen = false
+            var endCityCanSpawn = false
+            var endCityCanGen = false
 
-            if (chunk == BPos(wx, 0, wz).toChunkPos()) {
-                canSpawn = endCity.canSpawn(chunk.x, chunk.z, terrainGenerator.biomeSource)
-                canGen = endCityGenerator.generate(terrainGenerator, chunk)
+            if (chunk == pixelChunk) {
+                endCityCanSpawn = endCity.canSpawn(chunk.x, chunk.z, terrainGenerator.biomeSource)
+                endCityCanGen = endCityGenerator.generate(terrainGenerator, chunk)
             }
 
+            val endGatewayCanStart = gateway.canStart(pixelChunk.x, pixelChunk.z, terrainGenerator.worldSeed)
 
-            if (!canSpawn || !canGen) {
+            if (endCityCanSpawn && endCityCanGen) {
+                data[row + x] = (178 shl 16) or (76 shl 8) or (216)
+            } else if (endGatewayCanStart) {
+                data[row + x] = (58 shl 16) or (142 shl 8) or (140)
+
+            } else {
                 val h = terrainGenerator.getHeight(wx, wz)
 
                 val t = (h.toFloat() / 128f).coerceIn(0f, 1f)
@@ -62,8 +72,7 @@ fun renderEndMap(
                 val b = (brightness * 0.639f).toInt().coerceIn(0, 255)
 
                 data[row + x] = (r shl 16) or (g shl 8) or (b)
-            } else {
-                data[row + x] = (178 shl 16) or (76 shl 8) or (216)
+
             }
         }
     }
@@ -74,10 +83,9 @@ fun renderEndMap(
 fun main() {
     val seed: Long = 1
 
-    val gateway = EndGateway()
-
     val endCity = EndCity()
     val endCityGenerator = EndCityGenerator()
+    val endGateway = EndGateway()
 
     val source = BiomeSource(seed)
     val terrain = TerrainGenerator(source)
@@ -99,13 +107,22 @@ fun main() {
     if (canGen) println("hasShip: $hasShip")
 
     // print the generation order of end gateways on the main end island
-    println(gateway.getEndIslandGatewayOrder(source).contentToString())
+    println(endGateway.getEndIslandGatewayOrder(source).contentToString())
 
+    // can a random gateway spawn at these chunks?
+    val gateways = listOf(
+        CPos(26, -76),
+        CPos(89, 4),
+        CPos(-604, 865)
+    )
+    for ((i, gateway) in gateways.withIndex()) {
+        val canSpawn = endGateway.canStart(gateway.x, gateway.z, seed)
+        println("gateway ${i+1}: $canSpawn")
+    }
 
     // generate image of end islands around the city
     println("creating end island image....")
-    val img = renderEndMap(512, 512, 2648, -1848, terrain)
-
+    val img = renderEndMap(512, 512, -3962,15211, terrain)
     ImageIO.write(img, "png", File("end_map.png"))
     println("complete!")
 
