@@ -1,10 +1,7 @@
 package lgbt.faith.noise
 
-import lgbt.faith.Utils
-import lgbt.faith.Utils.grad2
 import lgbt.faith.rand.Rand
 import kotlin.math.floor
-import kotlin.math.sqrt
 
 class SimplexNoise(rand: Rand) {
     val originX: Double = rand.nextDouble() * 256.0
@@ -41,8 +38,8 @@ class SimplexNoise(rand: Rand) {
         val G2 = 0.21132486540518713
 
         val s = (x + y) * F2
-        val i = kotlin.math.floor(x + s).toInt()
-        val j = kotlin.math.floor(y + s).toInt()
+        val i = floor(x + s).toInt()
+        val j = floor(y + s).toInt()
 
         val t = (i + j) * G2
         val x0 = x - (i - t)
@@ -78,9 +75,9 @@ class SimplexNoise(rand: Rand) {
         val G3 = 1.0 / 6.0
 
         val s = (x + y + z) * F3
-        val i = kotlin.math.floor(x + s).toInt()
-        val j = kotlin.math.floor(y + s).toInt()
-        val k = kotlin.math.floor(z + s).toInt()
+        val i = floor(x + s).toInt()
+        val j = floor(y + s).toInt()
+        val k = floor(z + s).toInt()
 
         val t = (i + j + k) * G3
         val x0 = x - (i - t)
@@ -88,12 +85,12 @@ class SimplexNoise(rand: Rand) {
         val z0 = z - (k - t)
 
         val (i1, j1, k1, i2, j2, k2) = when {
-            x0 >= y0 && y0 >= z0 -> Sextuple(1,0,0, 1,1,0)
-            x0 >= y0             -> Sextuple(1,0,0, 1,0,1)
-            x0 >= z0             -> Sextuple(0,1,0, 1,1,0) // unreachable but kept for completeness
-            y0 >= z0             -> Sextuple(0,1,0, 1,1,0)
-            y0 >= x0             -> Sextuple(0,1,0, 0,1,1)
-            else                 -> Sextuple(0,0,1, 0,1,1)
+            y0 in z0..x0 -> Sextuple(1,0,0, 1,1,0)
+            x0 >= y0           -> Sextuple(1,0,0, 1,0,1)
+            x0 >= z0           -> Sextuple(0,1,0, 1,1,0) // unreachable but kept for completeness
+            y0 >= z0           -> Sextuple(0,1,0, 1,1,0)
+            y0 >= x0           -> Sextuple(0,1,0, 0,1,1)
+            else               -> Sextuple(0,0,1, 0,1,1)
         }
 
         val x1 = x0 - i1 + G3;  val y1 = y0 - j1 + G3;  val z1 = z0 - k1 + G3
