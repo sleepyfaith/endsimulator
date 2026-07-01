@@ -22,8 +22,6 @@ class Rand(var seed: Long = 0) {
         return (seed ushr (48-bits)).toInt()
     }
 
-    fun nextFloat(): Float = next(24) / (1 shl 24).toFloat()
-
     fun nextDouble(): Double = (((next(26).toLong() shl 27) + next(27).toLong()) * 1.1102230246251565E-16)
 
     fun nextInt(): Int = next(32)

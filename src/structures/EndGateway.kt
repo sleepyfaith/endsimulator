@@ -2,12 +2,8 @@ package lgbt.faith.structures
 
 import lgbt.faith.biome.BiomeSource
 import lgbt.faith.block.BPos
-import lgbt.faith.block.CPos
 import lgbt.faith.rand.Rand
 import lgbt.faith.rand.Xoroshiro128PlusPlus
-import lgbt.faith.terrain.TerrainGenerator
-import kotlin.math.floor
-import kotlin.math.sqrt
 
 class EndGateway() {
     data class Pos(val x: Int, val offsetY: Int, val z: Int)
@@ -18,8 +14,6 @@ class EndGateway() {
         BPos(-96, -1), BPos(-92, -30), BPos(-78, -57), BPos(-57, -78), BPos(-30, -92),
         BPos(0, -96), BPos(29, -92), BPos(56, -78), BPos(77, -57), BPos(91, -30)
     )
-
-    val spacing = 1
 
     val salt = 40000
     val rarity = 1f/700

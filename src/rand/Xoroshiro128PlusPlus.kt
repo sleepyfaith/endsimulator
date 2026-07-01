@@ -11,15 +11,6 @@ class Xoroshiro128PlusPlus(seed: Long = 0) {
     // helpers
     private fun rotl(x: Long, k: Int): Long = (x shl k) or (x ushr (64 - k))
 
-    private fun mix64(x: ULong): Long {
-        var z = x
-
-        z = (z xor (z shr 30)) * 0xbf58476d1ce4e5b9UL
-        z = (z xor (z shr 27)) * 0x94d049bb133111ebUL
-
-        return (z xor (z shr 31)).toLong()
-    }
-
     // seed setting
     fun setSeed(value: Long) {
         val XL = 0x9e3779b97f4a7c15uL
@@ -76,11 +67,8 @@ class Xoroshiro128PlusPlus(seed: Long = 0) {
         return result
     }
 
-    fun nextBits(bits: Int) = (nextLong() ushr (64 - bits)).toInt()
 
     fun nextFloat() = (nextLong() ushr 40) * 5.9604645E-8F
-
-    fun nextDouble() = (nextLong() ushr 11) * 1.1102230246251565E-16
 
     fun nextInt() =  (nextLong() ushr 32).toInt()
 

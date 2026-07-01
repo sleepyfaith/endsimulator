@@ -1,14 +1,10 @@
 package lgbt.faith.structures
 
 import lgbt.faith.biome.BiomeSource
-import lgbt.faith.block.BPos
-import lgbt.faith.rand.Rand
 import lgbt.faith.rand.Xoroshiro128PlusPlus
 
 class SmallEndIsland() {
     data class Pos(val x: Int, val offsetY: Int, val z: Int)
-
-    val spacing = 1
 
     val salt = 0
     val rarity = 1f/14
