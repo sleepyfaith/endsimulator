@@ -81,7 +81,7 @@ fun renderEndMap(
 }
 
 fun main() {
-    val seed: Long = 1
+    val seed: Long = 4
 
     val endCity = EndCity()
     val endCityGenerator = EndCityGenerator()
@@ -90,7 +90,7 @@ fun main() {
     val source = BiomeSource(seed)
     val terrain = TerrainGenerator(source)
 
-    val region = BPos(2648, 0, -1848).toChunkPos().toRegionPos(endCity.spacing)
+    val region = BPos(1024, 0, 1696).toChunkPos().toRegionPos(endCity.spacing)
 
     // show information about an end city on seed 1
     val chunk = endCity.getInRegion(region.x, region.z, seed)
@@ -111,9 +111,9 @@ fun main() {
 
     // can a random gateway spawn at these chunks?
     val gateways = listOf(
-        CPos(26, -76),
-        CPos(89, 4),
-        CPos(-604, 865)
+        CPos(60, -95),
+        CPos(84, 140),
+        CPos(66, 107)
     )
     for ((i, gateway) in gateways.withIndex()) {
         val canSpawn = endGateway.canStart(gateway.x, gateway.z, seed)
@@ -122,7 +122,7 @@ fun main() {
 
     // generate image of end islands around the city
     println("creating end island image....")
-    val img = renderEndMap(512, 512, -3962,15211, terrain)
+    val img = renderEndMap(512, 512, 1044, 1708, terrain)
     ImageIO.write(img, "png", File("end_map.png"))
     println("complete!")
 

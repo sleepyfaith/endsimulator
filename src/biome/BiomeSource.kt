@@ -65,7 +65,6 @@ class BiomeSource(val worldSeed: Long) {
         }
 
         val height = getHeight(x * 2 + 1, z * 2 + 1)
-
         if (height > 40.0f) {
             return "end_highlands"
         } else if (height >= 0.0f) {

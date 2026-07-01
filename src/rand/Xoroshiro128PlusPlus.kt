@@ -40,6 +40,26 @@ class Xoroshiro128PlusPlus(seed: Long = 0) {
         hi = (h xor (h shr 31)).toLong()
     }
 
+    fun setPopulationSeed(x: Int, z: Int, worldSeed: Long): Long {
+        val xr = Xoroshiro128PlusPlus(worldSeed)
+
+        val a = xr.nextLongJ() or 1L
+        val b = xr.nextLongJ() or 1L
+
+        val popSeed = (x.toLong() * a + z.toLong() * b) xor worldSeed
+        setSeed(popSeed)
+        return popSeed
+    }
+
+    fun setDecoratorSeed(x: Int, z: Int, worldSeed: Long, salt: Int): Long {
+        val popSeed = setPopulationSeed(x, z, worldSeed)
+        val decSeed = popSeed + salt
+
+        setSeed(decSeed)
+        return decSeed
+    }
+
+
     // normal xoroshiro128++ advancing
 
 
@@ -106,9 +126,10 @@ class Xoroshiro128PlusPlus(seed: Long = 0) {
     }
 
     fun nextLongJ(): Long {
-        val a = (nextLong() ushr 32).toInt().toLong()
-        val b = (nextLong() ushr 32).toInt().toLong() and 0xffffffffL
-        return (a shl 32) or b
+        val a = (nextLong() shr 32).toInt()
+        val b = (nextLong() shr 32).toInt()
+
+        return (a.toLong() shl 32) + b
     }
 
 

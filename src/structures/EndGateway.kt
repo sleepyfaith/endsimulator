@@ -2,11 +2,12 @@ package lgbt.faith.structures
 
 import lgbt.faith.biome.BiomeSource
 import lgbt.faith.block.BPos
-import lgbt.faith.block.CPos
 import lgbt.faith.rand.Rand
 import lgbt.faith.rand.Xoroshiro128PlusPlus
 
 class EndGateway() {
+    data class Pos(val x: Int, val offsetY: Int, val z: Int)
+
     val linkedGateways =  arrayOf(
         BPos(96, 0), BPos(91, 29), BPos(77, 56), BPos(56, 77), BPos(29, 91),
         BPos(-1, 96), BPos(-30, 91), BPos(-57, 77), BPos(-78, 56), BPos(-92, 29),
@@ -35,23 +36,24 @@ class EndGateway() {
     }
 
 
-    fun canStart(chunkX: Int, chunkZ: Int, worldSeed: Long): Boolean {
-        val x = chunkX * 16
-        val z = chunkZ * 16
-
-        var xr = Xoroshiro128PlusPlus(worldSeed)
-
-        val a = xr.nextLongJ() or 1L
-        val b = xr.nextLongJ() or 1L
-
-        val populationSeed = (x.toLong() * a + z.toLong() * b) xor worldSeed
-
-        xr = Xoroshiro128PlusPlus(populationSeed + salt)
+    fun getPos(chunkX: Int, chunkZ: Int, worldSeed: Long): Pos? {
+        val xr = Xoroshiro128PlusPlus()
+        xr.setDecoratorSeed(chunkX * 16, chunkZ * 16, worldSeed, salt)
 
         if (xr.nextFloat() >= rarity) {
-            return false
+            return null
         }
 
-        return true
+        val blockX  = (chunkX * 16) + xr.nextIntJ(16)
+        val blockZ  = (chunkZ * 16) + xr.nextIntJ(16)
+        val offsetY = xr.nextInt(7) + 3
+
+        return Pos(blockX, offsetY, blockZ)
+    }
+
+    fun canStart(chunkX: Int, chunkZ: Int, worldSeed: Long): Boolean {
+        getPos(chunkX, chunkZ, worldSeed) ?: return false
+
+        return BiomeSource(worldSeed).sampleBiome((chunkX shl 2) + 2, (chunkZ shl 2) + 2) == "end_highlands"
     }
 }

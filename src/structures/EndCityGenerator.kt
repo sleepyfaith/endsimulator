@@ -35,7 +35,7 @@ class EndCityGenerator {
         val rand = Rand(0)
         rand.setCarverSeed(terrainGenerator.worldSeed, chunk.x, chunk.z)
 
-        val y = EndCity.getLowestYIn5by5BoxOffset7Blocks(terrainGenerator, chunk.x, chunk.z)
+        val y = EndCity.getLowestYIn5by5BoxOffset7Blocks(terrainGenerator, chunk.x, chunk.z) + 1
 
         if (y < 60) return false
         val rotation = BlockRotation.getRandom(rand)
