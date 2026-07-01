@@ -2,8 +2,12 @@ package lgbt.faith.structures
 
 import lgbt.faith.biome.BiomeSource
 import lgbt.faith.block.BPos
+import lgbt.faith.block.CPos
 import lgbt.faith.rand.Rand
 import lgbt.faith.rand.Xoroshiro128PlusPlus
+import lgbt.faith.terrain.TerrainGenerator
+import kotlin.math.floor
+import kotlin.math.sqrt
 
 class EndGateway() {
     data class Pos(val x: Int, val offsetY: Int, val z: Int)
@@ -34,7 +38,6 @@ class EndGateway() {
 
         return order
     }
-
 
     fun getPos(chunkX: Int, chunkZ: Int, worldSeed: Long): Pos? {
         val xr = Xoroshiro128PlusPlus()

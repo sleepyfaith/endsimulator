@@ -91,7 +91,6 @@ fun main() {
     val terrain = TerrainGenerator(source)
 
     val region = BPos(1024, 0, 1696).toChunkPos().toRegionPos(endCity.spacing)
-
     // show information about an end city on seed 1
     val chunk = endCity.getInRegion(region.x, region.z, seed)
     val block = chunk.toBlockPos()
@@ -107,7 +106,8 @@ fun main() {
     if (canGen) println("hasShip: $hasShip")
 
     // print the generation order of end gateways on the main end island
-    println(endGateway.getEndIslandGatewayOrder(source).contentToString())
+    val gatewayOrder = endGateway.getEndIslandGatewayOrder(source)
+    println(gatewayOrder.contentToString())
 
     // can a random gateway spawn at these chunks?
     val gateways = listOf(

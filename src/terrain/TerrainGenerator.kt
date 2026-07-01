@@ -170,4 +170,17 @@ class TerrainGenerator(val biomeSource: BiomeSource) {
             else -> topY
         }
     }
+    fun isChunkEmpty(chunkX: Int, chunkZ: Int): Boolean {
+        for (dx in 0 until 16) {
+            for (dz in 0 until 16) {
+                val x = chunkX * 16 + dx
+                val z = chunkZ * 16 + dz
+
+                if (getHeight(x, z) > 0) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
 }
